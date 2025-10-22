@@ -35,17 +35,14 @@ export class AppComponent implements OnInit, OnDestroy {
    */
   private async initializeDoorSystem() {
     try {
-      // Check if door-id exists in preferences
       const hasDoorId = await this.doorPreferenceService.hasDoorId();
 
       if (hasDoorId) {
-        // Case 2: Existing door-id
         const doorId = await this.doorPreferenceService.getDoorId();
         if (doorId) {
           await this.initializeDatabase(doorId);
         }
       } else {
-        // Case 1: No door-id - show selection modal
         console.log('❌ No door ID found, showing selection modal');
         await this.showDoorSelectionModal();
       }
@@ -63,6 +60,7 @@ export class AppComponent implements OnInit, OnDestroy {
         component: DoorSelectionModalComponent,
         backdropDismiss: false, // Prevent dismissing without selection
         cssClass: 'door-selection-modal',
+        showBackdrop: true,
       });
 
       await modal.present();

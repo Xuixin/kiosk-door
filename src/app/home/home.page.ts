@@ -4,11 +4,10 @@ import {
   OnDestroy,
   ChangeDetectorRef,
   inject,
-  computed,
   signal,
+  ViewChild,
+  ElementRef,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { TransactionService } from '../services/transaction.service';
 import { DatabaseService } from '../core/Database/rxdb.service';
 import { DoorPreferenceService } from '../services/door-preference.service';
@@ -26,6 +25,8 @@ interface AccessResult {
   standalone: false,
 })
 export class HomePage implements OnInit, OnDestroy {
+  @ViewChild('studentInput') studentInput?: ElementRef<HTMLInputElement>;
+
   currentDate = new Date();
   currentTime = new Date();
 
@@ -48,10 +49,13 @@ export class HomePage implements OnInit, OnDestroy {
   public currentDoorName = signal<string>('');
 
   private timeInterval?: any;
+  private resultTimeout?: any;
 
   constructor() {
+    // Update time every minute
     this.timeInterval = setInterval(() => {
       this.currentTime = new Date();
+      this.currentDate = new Date();
       this.cdr.detectChanges();
     }, 60000);
   }
@@ -68,6 +72,9 @@ export class HomePage implements OnInit, OnDestroy {
   ngOnDestroy() {
     if (this.timeInterval) {
       clearInterval(this.timeInterval);
+    }
+    if (this.resultTimeout) {
+      clearTimeout(this.resultTimeout);
     }
   }
 
@@ -98,11 +105,51 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   /**
+   * Add number from numpad
+   */
+  addNumber(num: number) {
+    this.studentNumber += num.toString();
+    this.focusInput();
+  }
+
+  /**
+   * Clear input
+   */
+  clearInput() {
+    this.studentNumber = '';
+    this.focusInput();
+  }
+
+  /**
+   * Backspace
+   */
+  backspace() {
+    if (this.studentNumber.length > 0) {
+      this.studentNumber = this.studentNumber.slice(0, -1);
+    }
+    this.focusInput();
+  }
+
+  /**
+   * Focus input field
+   */
+  private focusInput() {
+    setTimeout(() => {
+      this.studentInput?.nativeElement.focus();
+    }, 0);
+  }
+
+  /**
    * Check student access
    */
   async checkAccess() {
     if (!this.studentNumber.trim()) {
       return;
+    }
+
+    // Clear any existing timeout
+    if (this.resultTimeout) {
+      clearTimeout(this.resultTimeout);
     }
 
     this.isChecking = true;
@@ -118,6 +165,7 @@ export class HomePage implements OnInit, OnDestroy {
           hasAccess: false,
           message: 'ไม่พบข้อมูลประตู กรุณาติดต่อเจ้าหน้าที่',
         });
+        this.autoResetAfterResult();
         return;
       }
 
@@ -127,6 +175,7 @@ export class HomePage implements OnInit, OnDestroy {
           hasAccess: false,
           message: 'ระบบฐานข้อมูลยังไม่พร้อม กรุณารอสักครู่',
         });
+        this.autoResetAfterResult();
         return;
       }
 
@@ -144,6 +193,7 @@ export class HomePage implements OnInit, OnDestroy {
           hasAccess: false,
           message: 'ไม่พบข้อมูลการลงทะเบียน',
         });
+        this.autoResetAfterResult();
         return;
       }
 
@@ -178,22 +228,47 @@ export class HomePage implements OnInit, OnDestroy {
         });
         console.log('❌ Access denied for:', student.name, 'Reason:', message);
       }
+
+      // Auto reset after showing result
+      this.autoResetAfterResult();
     } catch (error) {
       console.error('❌ Error checking access:', error);
       this.accessResult.set({
         hasAccess: false,
         message: 'เกิดข้อผิดพลาดในการตรวจสอบ กรุณาลองใหม่อีกครั้ง',
       });
+      this.autoResetAfterResult();
     } finally {
       this.isChecking = false;
     }
   }
 
   /**
-   * Clear access result
+   * Auto reset after showing result (3 seconds)
    */
-  clearResult() {
+  private autoResetAfterResult() {
+    this.resultTimeout = setTimeout(() => {
+      this.resetForm();
+    }, 3000); // Show result for 3 seconds
+  }
+
+  /**
+   * Reset form to initial state
+   */
+  private resetForm() {
     this.accessResult.set(null);
     this.studentNumber = '';
+    this.focusInput();
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Clear access result (manual)
+   */
+  clearResult() {
+    if (this.resultTimeout) {
+      clearTimeout(this.resultTimeout);
+    }
+    this.resetForm();
   }
 }

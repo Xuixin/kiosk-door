@@ -8,9 +8,7 @@ import { HomePageRoutingModule } from './home-routing.module';
 
 // PrimeNG imports
 import { ButtonModule } from 'primeng/button';
-import { TagModule } from 'primeng/tag';
-import { ToggleButtonModule } from 'primeng/togglebutton';
-import { InputTextModule } from 'primeng/inputtext';
+import { RippleModule } from 'primeng/ripple';
 
 @NgModule({
   imports: [
@@ -19,9 +17,7 @@ import { InputTextModule } from 'primeng/inputtext';
     IonicModule,
     HomePageRoutingModule,
     ButtonModule,
-    TagModule,
-    ToggleButtonModule,
-    InputTextModule,
+    RippleModule,
   ],
   declarations: [HomePage],
 })

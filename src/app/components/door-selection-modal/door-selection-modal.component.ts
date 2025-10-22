@@ -3,15 +3,14 @@ import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController } from '@ionic/angular';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
+import { RippleModule } from 'primeng/ripple';
 import { DoorPreferenceService } from '../../services/door-preference.service';
 import { GraphQLService, Door } from '../../services/graphql.service';
-
-// Door interface is now imported from GraphQLService
 
 @Component({
   selector: 'app-door-selection-modal',
   standalone: true,
-  imports: [CommonModule, IonicModule, ButtonModule, CardModule],
+  imports: [CommonModule, IonicModule, ButtonModule, CardModule, RippleModule],
   templateUrl: './door-selection-modal.component.html',
   styleUrls: ['./door-selection-modal.component.scss'],
 })
@@ -41,18 +40,15 @@ export class DoorSelectionModalComponent implements OnInit {
 
       console.log('🚪 Loading doors from GraphQL API...');
 
-      // Try to get doors from GraphQL API
       let doors: Door[] = [];
 
       try {
-        // First try the pullDoors query (for replication-style API)
         doors = await this.graphqlService.pullDoors();
         console.log('✅ Loaded doors via pullDoors:', doors.length);
       } catch (pullError) {
         console.warn('⚠️ pullDoors failed, trying getAllDoors:', pullError);
 
         try {
-          // Fallback to getAllDoors query (simpler query)
           doors = await this.graphqlService.getAllDoors();
           console.log('✅ Loaded doors via getAllDoors:', doors.length);
         } catch (getAllError) {
@@ -63,11 +59,9 @@ export class DoorSelectionModalComponent implements OnInit {
 
       if (doors.length === 0) {
         console.warn('⚠️ No doors returned from API, using fallback data');
-        // Fallback to mock data if API returns empty
         doors = this.getFallbackDoors();
       }
 
-      // Transform API data to match component interface
       const transformedDoors = doors.map((door) => ({
         id: door.id,
         name: door.name,
@@ -81,7 +75,6 @@ export class DoorSelectionModalComponent implements OnInit {
     } catch (error) {
       console.error('❌ Error loading doors:', error);
 
-      // Use fallback data on error
       console.log('🔄 Using fallback door data');
       const fallbackDoors = this.getFallbackDoors();
       this.doors.set(fallbackDoors);
@@ -148,10 +141,8 @@ export class DoorSelectionModalComponent implements OnInit {
     }
 
     try {
-      // Save door ID to preferences
       const success = await this.doorPreferenceService.setDoorId(selectedId);
       if (success) {
-        // Close modal and return selected door ID
         await this.modalController.dismiss(selectedId);
       } else {
         this.error.set('เกิดข้อผิดพลาดในการบันทึกข้อมูล');

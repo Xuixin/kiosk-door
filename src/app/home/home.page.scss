@@ -1,1 +1,272 @@
 /* Home Page Styles */
+// Animations
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+// Hover scale effects
+.hover\:scale-102:hover {
+  transform: scale(1.02);
+}
+
+.active\:scale-98:active {
+  transform: scale(0.98);
+}
+
+// Input styling
+input[type="text"] {
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+  appearance: none;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+// Custom scrollbar
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 100%);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+}
+
+// PrimeNG customization
+::ng-deep {
+  .p-button {
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+  }
+
+  .p-ripple {
+    overflow: hidden;
+    position: relative;
+  }
+
+  .p-ink {
+    background: rgba(59, 130, 246, 0.3);
+  }
+
+  // Numpad button styling - force all buttons to be exactly the same size and shape
+  .numpad-button {
+    width: 100% !important;
+    height: 3rem !important; // 48px - smaller for compact layout
+    min-height: 3rem !important;
+    max-height: 3rem !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.25rem !important; // text-xl equivalent
+    font-weight: bold !important;
+    border-radius: 0.75rem !important; // rounded-xl equivalent
+    aspect-ratio: 1 !important; // Force square shape
+
+    // Override any PrimeNG default sizing
+    min-width: auto !important;
+    max-width: none !important;
+
+    .p-button-label {
+      font-size: inherit !important;
+      font-weight: inherit !important;
+      line-height: 1 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .p-button-icon {
+      font-size: inherit !important;
+      width: auto !important;
+      height: auto !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    // Ensure icon-only buttons have same dimensions as label buttons
+    &.p-button-icon-only {
+      width: 100% !important;
+      height: 3rem !important;
+      min-height: 3rem !important;
+      max-height: 3rem !important;
+      aspect-ratio: 1 !important;
+    }
+
+    // Force square aspect ratio for all numpad buttons
+    &:not(.p-button-icon-only) {
+      aspect-ratio: 1 !important;
+    }
+  }
+
+  // Custom numpad buttons (X and back arrow) - same size as number buttons
+  .numpad-button-custom {
+    width: 100% !important;
+    height: 3rem !important; // Same height as number buttons
+    min-height: 3rem !important;
+    max-height: 3rem !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.25rem !important; // text-xl equivalent
+    font-weight: bold !important;
+    border-radius: 0.75rem !important; // rounded-xl equivalent
+    aspect-ratio: 1 !important; // Force square shape
+    border: 2px solid transparent !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px) !important;
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0) !important;
+    }
+  }
+
+  // Zero button - wider than other buttons (spans 2 columns)
+  .numpad-button-zero {
+    width: 100% !important;
+    height: 3rem !important; // Same height as other buttons
+    min-height: 3rem !important;
+    max-height: 3rem !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.25rem !important; // text-xl equivalent
+    font-weight: bold !important;
+    border-radius: 0.75rem !important; // rounded-xl equivalent
+    grid-column: span 2 !important; // Make it span 2 columns
+    aspect-ratio: 2 !important; // 2:1 aspect ratio (twice as wide as tall)
+
+    .p-button-label {
+      font-size: inherit !important;
+      font-weight: inherit !important;
+      line-height: 1 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+  }
+
+  // Additional override for PrimeNG button sizing
+  .grid .numpad-button {
+    aspect-ratio: 1 !important;
+    width: 100% !important;
+    height: 3rem !important;
+    min-height: 3rem !important;
+    max-height: 3rem !important;
+  }
+}
+
+// Touch screen optimizations
+@media (hover: none) and (pointer: coarse) {
+  button,
+  .cursor-pointer {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+}
+
+// Prevent text selection on buttons
+button {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+// Focus visible for accessibility
+*:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+// Smooth transitions
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// Kiosk mode - hide cursor on inactivity (optional)
+// body {
+//   cursor: none;
+// }
+
+// button, input {
+//   cursor: pointer !important;
+// }
+
+// Fullscreen mode helper
+:host {
+  display: block;
+  height: 100%;
+}
+
+ion-content {
+  --background: transparent;
+}
