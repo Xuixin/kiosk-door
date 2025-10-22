@@ -1,0 +1,158 @@
+<ion-content class="ion-no-padding">
+  <div
+    class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex flex-col"
+  >
+    <!-- Header -->
+    <div class="bg-white shadow-md border-b-4 border-blue-600">
+      <div class="container mx-auto px-8 py-6">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <div
+              class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center"
+            >
+              <i class="pi pi-building text-3xl text-white"></i>
+            </div>
+            <div>
+              <h1 class="text-3xl font-bold text-gray-800">เลือกประตู</h1>
+              <p class="text-gray-500 text-lg">Door Selection</p>
+            </div>
+          </div>
+          <p-button
+            icon="pi pi-times-circle"
+            severity="secondary"
+            size="small"
+            [text]="true"
+            class="text-lg"
+            (onClick)="cancel()"
+          ></p-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 p-8">
+      <div class="max-w-4xl mx-auto">
+        <!-- Loading State -->
+        <div *ngIf="isLoading()" class="text-center py-12">
+          <div
+            class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"
+          ></div>
+          <p class="mt-4 text-gray-600">กำลังโหลดข้อมูลประตู...</p>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="error() && !isLoading()" class="text-center py-12">
+          <div class="text-red-500 text-6xl mb-4">⚠️</div>
+          <h3 class="text-xl font-semibold text-gray-800 mb-2">
+            เกิดข้อผิดพลาด
+          </h3>
+          <p class="text-gray-600 mb-6">{{ error() }}</p>
+          <p-button
+            label="ลองใหม่"
+            severity="primary"
+            (onClick)="retry()"
+          ></p-button>
+        </div>
+
+        <!-- Door List -->
+        <div *ngIf="!isLoading() && !error()" class="space-y-4">
+          <div class="text-center mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">
+              เลือกประตูที่ต้องการใช้งาน
+            </h2>
+            <p class="text-gray-600">กรุณาเลือกประตูที่เครื่องนี้จะควบคุม</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <p-card
+              *ngFor="let door of doors()"
+              [class]="
+                'cursor-pointer transition-all duration-200 hover:shadow-lg ' +
+                (isSelected(door.id)
+                  ? 'ring-2 ring-blue-500 bg-blue-50'
+                  : 'hover:shadow-md')
+              "
+              (click)="selectDoor(door.id)"
+            >
+              <ng-template pTemplate="header">
+                <div class="p-6 text-center">
+                  <div
+                    class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4"
+                  >
+                    <i class="pi pi-building text-2xl text-blue-600"></i>
+                  </div>
+                  <h3 class="text-lg font-semibold text-gray-800">
+                    {{ door.name }}
+                  </h3>
+                </div>
+              </ng-template>
+
+              <ng-template pTemplate="content">
+                <div class="p-6 pt-0">
+                  <p class="text-gray-600 text-sm mb-4">
+                    {{ door.description }}
+                  </p>
+
+                  <!-- Selection Indicator -->
+                  <div class="flex items-center justify-center">
+                    <div
+                      *ngIf="isSelected(door.id)"
+                      class="flex items-center text-blue-600"
+                    >
+                      <i class="pi pi-check-circle mr-2"></i>
+                      <span class="font-medium">เลือกแล้ว</span>
+                    </div>
+                    <div
+                      *ngIf="!isSelected(door.id)"
+                      class="flex items-center text-gray-400"
+                    >
+                      <i class="pi pi-circle mr-2"></i>
+                      <span>คลิกเพื่อเลือก</span>
+                    </div>
+                  </div>
+                </div>
+              </ng-template>
+            </p-card>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="doors().length === 0" class="text-center py-12">
+            <div class="text-gray-400 text-6xl mb-4">🚪</div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">
+              ไม่พบข้อมูลประตู
+            </h3>
+            <p class="text-gray-600">
+              กรุณาติดต่อเจ้าหน้าที่หากต้องการความช่วยเหลือ
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="bg-white border-t border-gray-200 px-8 py-6">
+      <div class="max-w-4xl mx-auto flex justify-between items-center">
+        <div class="text-sm text-gray-600">
+          <span *ngIf="!selectedDoorId()">กรุณาเลือกประตู</span>
+          <span *ngIf="selectedDoorId()" class="text-blue-600 font-medium">
+            เลือกแล้ว: {{ getSelectedDoorName() }}
+          </span>
+        </div>
+
+        <div class="flex gap-3">
+          <p-button
+            label="ยกเลิก"
+            severity="secondary"
+            (onClick)="cancel()"
+          ></p-button>
+          <p-button
+            label="ยืนยัน"
+            severity="primary"
+            [disabled]="!selectedDoorId()"
+            (onClick)="confirmSelection()"
+          ></p-button>
+        </div>
+      </div>
+    </div>
+  </div>
+</ion-content>
