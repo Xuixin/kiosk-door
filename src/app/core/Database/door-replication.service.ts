@@ -186,17 +186,24 @@ export class DoorReplicationService extends BaseReplicationService<RxDoorDocumen
             );
           });
         } else if (wasOffline && isOnline) {
-          console.log('[door] Back online, triggering replication rerun in 1s');
+          console.log(
+            '[door] Back online, triggering replication restart in 1s',
+          );
 
           // Delay 1s to allow network to stabilize (Android WebView timing)
-          setTimeout(() => {
-            this.rerunReplication().catch((error) => {
+          setTimeout(async () => {
+            console.log('[door] Starting replication restart...');
+            try {
+              await this.restartReplication();
+              console.log('[door] Replication restart completed successfully');
+            } catch (error) {
+              console.error('[door] Failed to restart replication:', error);
               this.logger.error(
                 'networkMonitoring',
-                'Failed to rerun replication',
+                'Failed to restart replication',
                 error,
               );
-            });
+            }
           }, 1000);
         }
 

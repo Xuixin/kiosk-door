@@ -227,17 +227,24 @@ export class TransactionReplicationService extends BaseReplicationService<RxTxnD
             );
           });
         } else if (wasOffline && isOnline) {
-          console.log('[txn] Back online, triggering replication rerun in 1s');
+          console.log(
+            '[txn] Back online, triggering replication restart in 1s',
+          );
 
           // Delay 1s to allow network to stabilize (Android WebView timing)
-          setTimeout(() => {
-            this.rerunReplication().catch((error) => {
+          setTimeout(async () => {
+            console.log('[txn] Starting replication restart...');
+            try {
+              await this.restartReplication();
+              console.log('[txn] Replication restart completed successfully');
+            } catch (error) {
+              console.error('[txn] Failed to restart replication:', error);
               this.logger.error(
                 'networkMonitoring',
-                'Failed to rerun replication',
+                'Failed to restart replication',
                 error,
               );
-            });
+            }
           }, 1000);
         }
 
