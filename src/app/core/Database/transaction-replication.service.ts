@@ -7,6 +7,7 @@ import {
   STREAM_TRANSACTION_SUBSCRIPTION,
 } from './query-builder/txn-query-builder';
 import { DoorPreferenceService } from '../../services/door-preference.service';
+import { NetworkMonitorService } from '../../services/network-monitor.service';
 import { BaseReplicationService } from './base-replication.service';
 import { BaseReplicationConfig } from './types/replication.types';
 import {
@@ -17,16 +18,24 @@ import {
   transformDocumentForPull,
 } from './utils/replication.utils';
 import { createServiceLogger } from './utils/logging.utils';
+import { Subscription } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TransactionReplicationService extends BaseReplicationService<RxTxnDocumentType> {
   private doorPreferenceService = inject(DoorPreferenceService);
+  private networkMonitorService = inject(NetworkMonitorService);
+  private networkSubscription?: Subscription;
   private doorId: string | null = null;
   protected readonly logger = createServiceLogger(
     'TransactionReplicationService',
   );
+
+  constructor() {
+    super();
+    this.setupNetworkMonitoring();
+  }
 
   /**
    * Get replication configuration for transactions
@@ -44,20 +53,15 @@ export class TransactionReplicationService extends BaseReplicationService<RxTxnD
 
       pull: {
         queryBuilder: (checkpoint, limit) => {
-          this.logger.debug('pullQueryBuilder', 'Building pull query', {
-            checkpoint,
-            limit,
-          });
-          return {
+          const queryConfig = {
             query: PULL_TRANSACTION_QUERY,
             variables: createPullQueryVariables(checkpoint, limit),
           };
+
+          return queryConfig;
         },
 
         streamQueryBuilder: (headers) => {
-          this.logger.debug('streamQueryBuilder', 'Building stream query', {
-            headers,
-          });
           return {
             query: STREAM_TRANSACTION_SUBSCRIPTION,
             variables: {},
@@ -149,7 +153,6 @@ export class TransactionReplicationService extends BaseReplicationService<RxTxnD
    * Setup replication with door ID filtering
    */
   async setupReplication(collection: any): Promise<any> {
-    // Get door ID for filtering
     this.doorId = await this.doorPreferenceService.getDoorId();
     this.logger.info(
       'setupReplication',
@@ -157,7 +160,85 @@ export class TransactionReplicationService extends BaseReplicationService<RxTxnD
       { doorId: this.doorId },
     );
 
-    return super.setupReplication(collection);
+    const replicationState = await super.setupReplication(collection);
+
+    // Setup replication observables for debugging
+    this.setupReplicationObservables(replicationState);
+
+    return replicationState;
+  }
+
+  /**
+   * Setup replication observables for debugging and monitoring
+   */
+  private setupReplicationObservables(replicationState: any): void {
+    if (!replicationState) {
+      this.logger.warn(
+        'setupReplicationObservables',
+        'No replication state available',
+      );
+      return;
+    }
+
+    // emits each document that was received from the remote
+    replicationState.received$.subscribe((doc: any) => {
+      console.log('[txn] replicationReceived', doc);
+    });
+
+    // emits each document that was send to the remote
+    replicationState.sent$.subscribe((doc: any) => {
+      console.log('[txn] replicationSent', doc);
+    });
+
+    // emits all errors that happen when running the push- & pull-handlers.
+    replicationState.error$.subscribe((error: any) => {
+      console.log('[txn] replicationError', error);
+    });
+
+    // emits true when the replication was canceled, false when not.
+    replicationState.canceled$.subscribe((bool: boolean) => {
+      console.log('[txn] replicationCanceled', bool);
+    });
+
+    // emits true when a replication cycle is running, false when not.
+    replicationState.active$.subscribe((bool: boolean) => {
+      console.log('[txn] replicationActive', bool);
+    });
+  }
+
+  /**
+   * Setup network monitoring to trigger replication when back online
+   */
+  private setupNetworkMonitoring(): void {
+    let wasOffline = false;
+
+    this.networkSubscription = this.networkMonitorService
+      .getNetworkStatus$()
+      .subscribe((isOnline) => {
+        console.log('[txn] Network status', { isOnline, wasOffline });
+
+        if (wasOffline && isOnline) {
+          console.log('[txn] Back online, triggering replication rerun in 1s');
+
+          // Delay 1s to allow network to stabilize (Android WebView timing)
+          setTimeout(() => {
+            this.rerunReplication().catch((error) => {
+              this.logger.error(
+                'networkMonitoring',
+                'Failed to rerun replication',
+                error,
+              );
+            });
+          }, 1000);
+        }
+
+        wasOffline = !isOnline;
+      });
+  }
+
+  override ngOnDestroy(): void {
+    this.networkSubscription?.unsubscribe();
+    super.ngOnDestroy();
   }
 
   /**

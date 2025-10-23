@@ -46,6 +46,7 @@ export abstract class BaseReplicationService<T = any>
   protected readonly isInitialized$ = new BehaviorSubject<boolean>(false);
   protected readonly isActive$ = new BehaviorSubject<boolean>(false);
   protected readonly error$ = new BehaviorSubject<Error | null>(null);
+  protected collection?: RxCollection;
 
   private subscriptions: Subscription[] = [];
   private retryConfig: RetryConfig;
@@ -79,6 +80,7 @@ export abstract class BaseReplicationService<T = any>
   ): Promise<ReplicationState<T>> {
     try {
       this.logger.info('setupReplication', 'Starting replication setup');
+      this.collection = collection; // Store for restart
 
       const config = this.getReplicationConfig();
       this.validateConfig(config);
@@ -334,15 +336,67 @@ export abstract class BaseReplicationService<T = any>
   }
 
   /**
-   * Restart replication with exponential backoff
+   * Force rerun replication (useful when coming back online)
    */
-  async restartReplication(collection: RxCollection): Promise<void> {
-    this.logger.info('restartReplication', 'Restarting replication');
-
+  async rerunReplication(): Promise<void> {
     try {
+      this.logger.info('rerunReplication', 'Force rerunning replication');
+
+      if (!this.replicationState) {
+        this.logger.warn('rerunReplication', 'Replication state not available');
+        return;
+      }
+
+      console.log(`[${this.getCollectionName()}] Force rerunning replication`);
+
+      // Check if rerun() method exists (RxDB v15+)
+      if ('rerun' in this.replicationState) {
+        await (this.replicationState as any).rerun();
+        this.logger.info(
+          'rerunReplication',
+          'Replication rerun completed via rerun()',
+        );
+      } else {
+        // Fallback: restart replication
+        this.logger.warn(
+          'rerunReplication',
+          'rerun() not available, using restart',
+        );
+        await this.restartReplication();
+      }
+    } catch (error) {
+      this.logger.error(
+        'rerunReplication',
+        'Error rerunning replication',
+        error,
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Restart replication (stop and setup again)
+   */
+  async restartReplication(): Promise<void> {
+    try {
+      this.logger.info('restartReplication', 'Restarting replication');
+
+      if (!this.collection) {
+        throw DatabaseErrorFactory.replication(
+          'Collection reference not available for restart',
+          'restartReplication',
+          this.getCollectionName(),
+          false,
+        );
+      }
+
       await this.stopReplication();
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Brief pause
-      await this.setupReplication(collection);
+      await this.setupReplication(this.collection);
+
+      this.logger.info(
+        'restartReplication',
+        'Replication restarted successfully',
+      );
     } catch (error) {
       this.logger.error(
         'restartReplication',

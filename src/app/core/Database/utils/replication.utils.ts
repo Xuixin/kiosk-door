@@ -111,7 +111,7 @@ export function transformDocumentForPull<T extends Record<string, any>>(
  * Create replication query variables
  */
 export function createPullQueryVariables(checkpoint: any, limit: number = 5) {
-  return {
+  const variables = {
     input: {
       checkpoint: {
         id: checkpoint?.id || '',
@@ -120,6 +120,14 @@ export function createPullQueryVariables(checkpoint: any, limit: number = 5) {
       limit,
     },
   };
+
+  console.log('[replication] createPullQueryVariables', {
+    checkpoint,
+    limit,
+    variables,
+  });
+
+  return variables;
 }
 
 /**
@@ -146,10 +154,17 @@ export function extractReplicationData<T = any>(
   dataPath: string,
   context: { service: string; operation: string },
 ): { documents: T[]; checkpoint: any } {
+  console.log('[replication] extractReplicationData', {
+    dataPath,
+    context,
+    response,
+  });
+
   const data = response[dataPath] || response;
 
   if (!data || typeof data !== 'object') {
     logger.warn(context, 'Invalid replication response structure', response);
+    console.log('[replication] Invalid response structure', response);
     return { documents: [], checkpoint: null };
   }
 
@@ -158,6 +173,12 @@ export function extractReplicationData<T = any>(
 
   logger.debug(context, `Extracted ${documents.length} documents`, {
     checkpoint,
+  });
+
+  console.log('[replication] Extracted data', {
+    documentCount: documents.length,
+    checkpoint,
+    documents: documents.slice(0, 3), // Show first 3 docs for debugging
   });
 
   return { documents, checkpoint };
