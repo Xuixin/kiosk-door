@@ -49,7 +49,6 @@ export class DoorReplicationService extends BaseReplicationService<RxDoorDocumen
 
       pull: {
         queryBuilder: (checkpoint, limit) => {
-
           const queryConfig = {
             query: PULL_DOOR_QUERY,
             variables: createPullQueryVariables(checkpoint, limit),
@@ -58,7 +57,6 @@ export class DoorReplicationService extends BaseReplicationService<RxDoorDocumen
         },
 
         streamQueryBuilder: (headers) => {
-  
           return {
             query: STREAM_DOOR_SUBSCRIPTION,
             variables: {},
@@ -66,7 +64,6 @@ export class DoorReplicationService extends BaseReplicationService<RxDoorDocumen
         },
 
         responseModifier: (plainResponse, requestCheckpoint) => {
-
           const { documents, checkpoint } = extractReplicationData(
             plainResponse,
             'pullDoors',
@@ -179,7 +176,16 @@ export class DoorReplicationService extends BaseReplicationService<RxDoorDocumen
       .subscribe((isOnline) => {
         console.log('[door] Network status', { isOnline, wasOffline });
 
-        if (wasOffline && isOnline) {
+        if (!isOnline) {
+          console.log('[door] Network offline, stopping replication');
+          this.stopReplication().catch((error) => {
+            this.logger.error(
+              'networkMonitoring',
+              'Failed to stop replication',
+              error,
+            );
+          });
+        } else if (wasOffline && isOnline) {
           console.log('[door] Back online, triggering replication rerun in 1s');
 
           // Delay 1s to allow network to stabilize (Android WebView timing)

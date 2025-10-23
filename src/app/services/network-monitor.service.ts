@@ -1,9 +1,7 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { Network } from '@capacitor/network';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { createServiceLogger } from '../core/Database/utils/logging.utils';
-import { DoorReplicationService } from '../core/Database/door-replication.service';
-import { TransactionReplicationService } from '../core/Database/transaction-replication.service';
 
 @Injectable({
   providedIn: 'root',
@@ -13,10 +11,6 @@ export class NetworkMonitorService implements OnDestroy {
   private readonly networkStatus$ = new BehaviorSubject<boolean>(true);
   private previousStatus: boolean = true;
   private listener?: any;
-
-  // Inject replication services
-  private doorReplicationService = inject(DoorReplicationService);
-  private transactionReplicationService = inject(TransactionReplicationService);
 
   constructor() {
     this.initializeNetworkListener();
@@ -52,8 +46,7 @@ export class NetworkMonitorService implements OnDestroy {
 
           // Handle network status changes
           if (!status.connected) {
-            console.log('[network] Device offline, stopping replication');
-            this.stopReplications();
+            console.log('[network] Device offline');
           } else if (wasOffline && isNowOnline) {
             console.log('[network] Device back online, triggering replication');
           }
@@ -79,28 +72,6 @@ export class NetworkMonitorService implements OnDestroy {
 
   isOnline(): boolean {
     return this.networkStatus$.value;
-  }
-
-  /**
-   * Stop all replications when offline
-   */
-  private async stopReplications(): Promise<void> {
-    try {
-      await Promise.all([
-        this.doorReplicationService.stopReplication(),
-        this.transactionReplicationService.stopReplication(),
-      ]);
-      this.logger.info(
-        'stopReplications',
-        'All replications stopped due to offline status',
-      );
-    } catch (error) {
-      this.logger.error(
-        'stopReplications',
-        'Error stopping replications',
-        error,
-      );
-    }
   }
 
   ngOnDestroy(): void {

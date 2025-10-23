@@ -217,7 +217,16 @@ export class TransactionReplicationService extends BaseReplicationService<RxTxnD
       .subscribe((isOnline) => {
         console.log('[txn] Network status', { isOnline, wasOffline });
 
-        if (wasOffline && isOnline) {
+        if (!isOnline) {
+          console.log('[txn] Network offline, stopping replication');
+          this.stopReplication().catch((error) => {
+            this.logger.error(
+              'networkMonitoring',
+              'Failed to stop replication',
+              error,
+            );
+          });
+        } else if (wasOffline && isOnline) {
           console.log('[txn] Back online, triggering replication rerun in 1s');
 
           // Delay 1s to allow network to stabilize (Android WebView timing)
