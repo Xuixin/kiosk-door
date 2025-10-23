@@ -4,22 +4,28 @@ interface CapacitorConfig {
   webDir: string;
   server?: {
     androidScheme: string;
+    cleartext: boolean;
   };
   plugins?: any;
+  android?: any;
 }
 
 const config: CapacitorConfig = {
-  appId: "io.ionic.starter",
-  appName: "kiosk",
-  webDir: "www/browser",
+  appId: 'io.ionic.starter',
+  appName: 'kiosk',
+  webDir: 'www/browser',
   server: {
-    androidScheme: "https",
+    androidScheme: 'http',
+    cleartext: true,
   },
   plugins: {
     CapacitorSQLite: {
-      iosDatabaseLocation: "Library/databases",
-      androidDatabaseLocation: "databases",
+      iosDatabaseLocation: 'Library/databases',
+      androidDatabaseLocation: 'databases',
     },
+  },
+  android: {
+    allowMixedContent: true,
   },
 };
 
